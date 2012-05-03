@@ -1,0 +1,8 @@
+Hardware:
+    1. relay hole size
+    2. Power jack hole size
+    3. power jack parallel w/ rj45
+    4. j1 roation/label
+    5. label size
+    6. move electrolytic caps
+    7. label raw,gnd,3v3
