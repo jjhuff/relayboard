@@ -8,11 +8,7 @@ unsigned int network_read(void){
 }
 
 void network_send(void){
-	if(uip_len <= UIP_LLH_LEN + 40){
-		enc28j60PacketSend(uip_len, (uint8_t *)uip_buf, 0, 0);
-	}else{
-		enc28j60PacketSend(54, (uint8_t *)uip_buf , uip_len - UIP_LLH_LEN - 40, (uint8_t*)uip_appdata);
-	}
+    enc28j60PacketSend(uip_len, (uint8_t *)uip_buf, 0, 0);
 }
 
 void network_init(void)

@@ -48,31 +48,12 @@ int main(void)
     uip_ipaddr(ipaddr, 255,255,255,0);
     uip_setnetmask(ipaddr);
 
-/*	uip_ipaddr(ipaddr, 192,167,0,255);
-	uip_sethostaddr(ipaddr);
-	uip_ipaddr(ipaddr, 192,167,0,254);
-	uip_setdraddr(ipaddr);
-	uip_ipaddr(ipaddr, 255,255,0,0);
-	uip_setnetmask(ipaddr);
-*/
 //#endif /*__DHCPC_H__*/
 
-    /*u16 t = enc28j60Read(MAADR0);
-    if (t == 0x70)
-        enc28j60PhyWrite(PHLCON,0x880); //all on
-    else
-        enc28j60PhyWrite(PHLCON,0x990); //all off
-   */
-    bool toggle=0;
 	while(1){
 		uip_len = network_read();
 
 		if(uip_len > 0) {
-            if (toggle) 
-                enc28j60PhyWrite(PHLCON,0x990); //all off
-            else
-                enc28j60PhyWrite(PHLCON,0x880); //all on
-            toggle = !toggle;
 			if(BUF->type == htons(UIP_ETHTYPE_IP)){
 				uip_arp_ipin();
 				uip_input();
@@ -97,16 +78,6 @@ int main(void)
 					network_send();
 				}
 			}
-
-			#if UIP_UDP
-			for(i = 0; i < UIP_UDP_CONNS; i++) {
-				uip_udp_periodic(i);
-				if(uip_len > 0) {
-					uip_arp_out();
-					network_send();
-				}
-			}
-			#endif /* UIP_UDP */
 
 			if(timer_expired(&arp_timer)) {
 				timer_reset(&arp_timer);

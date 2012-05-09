@@ -251,18 +251,16 @@
 
 // buffer boundaries applied to internal 8K ram
 //	entire available packet buffer space is allocated
-#define TXSTART_INIT   	0x0000	// start TX buffer at 0
-#define RXSTART_INIT   	0x0600	// give TX buffer space for one full ethernet frame (~1500 bytes)
-#define RXSTOP_INIT    	0x1FFF	// receive buffer gets the rest
+// start with recbuf at 0 (must be zero! assumed in code)
+#define RXSTART_INIT     0x0
+// receive buffer end, must be odd number:
+#define RXSTOP_INIT      (0x1FFF-0x0600)
+// start TX buffer after RXSTOP_INIT with space for one full ethernet frame (~1500 bytes)
+#define TXSTART_INIT     (0x1FFF-0x0600+1)
+// stop TX buffer at end of mem
+#define TXSTOP_INIT      0x1FFF
 
-#define	MAX_FRAMELEN	1518	// maximum ethernet frame length
-
-// Ethernet constants
-#define ETHERNET_MIN_PACKET_LENGTH	0x3C
-//#define ETHERNET_HEADER_LENGTH		0x0E
-
-// setup ports for I/O
-//void ax88796SetupPorts(void);
+#define	MAX_FRAMELEN	1500	// maximum ethernet frame length
 
 //! do a ENC28J60 read operation
 u08 enc28j60ReadOp(u08 op, u08 address);
