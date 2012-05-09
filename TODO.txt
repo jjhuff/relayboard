@@ -6,3 +6,8 @@ Hardware:
     5. label size
     6. move electrolytic caps
     7. label raw,gnd,3v3
+    8. R2 (bias R) should be 2K
+    9. twisted pair pins are reversed
+   10. magjack pin 3 needs to go to 3.3v via ferrite
+   11. LEDs on each relay
+   12. bias resistor on relay transistor?
