@@ -1,0 +1,7 @@
+*.swp
+*.o
+*.hex
+*.bin
+*.elf
+*.map
+*.lst
