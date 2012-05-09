@@ -1,8 +1,7 @@
 # vim: noet
 
 PRG	= relayboard
-OBJ	=  simple-httpd.o clock-arch.o main.o
-OBJ += enc28j60/enc28j60.o enc28j60/network.o
+OBJ	=  simple-httpd.o clock-arch.o main.o enc28j60.o
 OBJ += uip/uiplib.o uip/psock.o uip/uip_arp.o uip/timer.o uip/uip.o
 
 MCU_TARGET	= atmega328p

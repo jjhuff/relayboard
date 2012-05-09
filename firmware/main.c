@@ -6,16 +6,22 @@
 
 #include "global-conf.h"
 #include "uip/uip_arp.h"
-#include "network.h"
-#include "enc28j60/enc28j60.h"
+#include "enc28j60.h"
 
 #include <string.h>
 #define BUF ((struct uip_eth_hdr *)&uip_buf[0])
 
+unsigned int network_read(void){
+	return ((uint16_t) enc28j60PacketReceive(UIP_BUFSIZE, (uint8_t *)uip_buf));
+}
+
+void network_send(void){
+    enc28j60PacketSend(uip_len, (uint8_t *)uip_buf, 0, 0);
+}
 
 int main(void)
 {
-	network_init();
+	enc28j60Init();
 
 	CLKPR = (1<<CLKPCE);	//Change prescaler
 	CLKPR = (1<<CLKPS0);	//Use prescaler 2
