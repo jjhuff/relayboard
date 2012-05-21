@@ -37,12 +37,12 @@ int main(void)
 	timer_set(&arp_timer, CLOCK_SECOND * 10);
 
 	uip_init();
-	
+
 	struct uip_eth_addr mac = {{UIP_ETHADDR0, UIP_ETHADDR1, UIP_ETHADDR2, UIP_ETHADDR3, UIP_ETHADDR4, UIP_ETHADDR5}};
 
 	uip_setethaddr(mac);
 
-	simple_httpd_init();
+	relay_httpd_init();
 
 //#ifdef __DHCPC_H__
 //	dhcpc_init(&mac, 6);

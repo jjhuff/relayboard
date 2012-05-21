@@ -3,7 +3,7 @@
 PRG	= relayboard
 OBJ	=  clock-arch.o main.o enc28j60.o
 OBJ += uip/uiplib.o uip/psock.o uip/uip_arp.o uip/timer.o uip/uip.o
-OBJ += simple-httpd.o
+OBJ += relay-httpd.o
 #OBJ += webserver/httpd.o webserver/httpd-cgi.o  webserver/httpd-fs.o  webserver/http-strings.o webserver/webstrings_common.o webserver/websrv_helper_functions.o
 
 MCU_TARGET	= atmega328p

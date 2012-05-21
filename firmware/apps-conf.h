@@ -5,9 +5,9 @@
 
 //#include "smtp.h"
 //#include "hello-world.h"
-#include "simple-httpd.h"
+#include "relay-httpd.h"
 //#include "telnetd.h"
-//#include "webserver.h"
+//#include "webserver/webserver.h"
 //#include "dhcpc.h"
 //#include "resolv.h"
 //#include "webclient.h"
