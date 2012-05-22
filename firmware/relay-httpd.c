@@ -47,6 +47,8 @@ static int handle_connection(struct httpd_state *s)
     if(s->inputbuf[0] != '/') {
         PSOCK_CLOSE_EXIT(&s->sock);
     }
+    // Null terminate the path
+    s->inputbuf[PSOCK_DATALEN(&s->sock) - 1] = 0;
 
     strncpy(s->path, s->inputbuf, sizeof(s->path)-1);
 
