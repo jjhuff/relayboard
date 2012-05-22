@@ -52,12 +52,14 @@ static int handle_connection(struct httpd_state *s)
 
     strncpy(s->path, s->inputbuf, sizeof(s->path)-1);
 
-    // Read the rest of the request
-    /*while(1) {
+    // Read the request headers
+    while(1) {
         PSOCK_READTO(&s->sock, '\n');
-        if(PSOCK_DATALEN(&s->sock) == 0)
+        // Look for a empty line (\r\n)
+        if(PSOCK_DATALEN(&s->sock) <= 2) {
             break;
-    }*/
+        }
+    }
 
     PSOCK_SEND_STR(&s->sock, "HTTP/1.0 200 OK\r\n");
     PSOCK_SEND_STR(&s->sock, "Content-Type: text/plain\r\n");
