@@ -130,7 +130,7 @@ AOBJ      = $(ASRC:.S=.o)
 LINKONLYOBJECTS = 
 
 ## Build
-all: $(TARGET) $(PROJECT).hex $(PROJECT).eep $(PROJECT).lss size
+all: $(TARGET) $(PROJECT).hex $(PROJECT).eep $(PROJECT).lst size
 
 ## Compile
 $(COBJ) : %.o : %.c
@@ -163,7 +163,7 @@ burn-fuse:
 %.eep: $(ELF)
 	 $(OBJCOPY)  $(HEX_EEPROM_FLAGS) -O ihex $< $@ || exit 0
 
-%.lss: $(ELF)
+%.lst: $(ELF)
 	$(OBJDUMP) -h -S $< > $@
 
 
@@ -180,7 +180,7 @@ size: ${ELF}
 ## Clean target
 .PHONY: clean
 clean:
-	-rm -rf $(COBJ) dep/* $(PROJECT).elf $(PROJECT).hex $(PROJECT).eep $(PROJECT).lss $(PROJECT).map
+	-rm -rf $(COBJ) dep/* $(PROJECT).elf $(PROJECT).hex $(PROJECT).eep $(PROJECT).lst $(PROJECT).map
 
 
 ## Other dependencies
