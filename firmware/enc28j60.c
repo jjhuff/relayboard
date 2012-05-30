@@ -33,10 +33,10 @@ u16 NextPacketPtr;
 u08 enc28j60ReadOp(u08 op, u08 address)
 {
 	u08 data;
-   
+
 	// assert CS
 	ENC28J60_CONTROL_PORT &= ~(1<<ENC28J60_CONTROL_CS);
-	
+
 	// issue read command
 	SPDR = op | (address & ADDR_MASK);
 	while(!(SPSR & (1<<SPIF)));
@@ -50,7 +50,7 @@ u08 enc28j60ReadOp(u08 op, u08 address)
 		while(!(inb(SPSR) & (1<<SPIF)));
 	}
 	data = SPDR;
-	
+
 	// release CS
 	ENC28J60_CONTROL_PORT |= (1<<ENC28J60_CONTROL_CS);
 
@@ -77,7 +77,7 @@ void enc28j60ReadBuffer(u16 len, u08* data)
 {
 	// assert CS
 	ENC28J60_CONTROL_PORT &= ~(1<<ENC28J60_CONTROL_CS);
-	
+
 	// issue read command
 	SPDR = ENC28J60_READ_BUF_MEM;
 	while(!(SPSR & (1<<SPIF)));
@@ -87,7 +87,7 @@ void enc28j60ReadBuffer(u16 len, u08* data)
 		SPDR = 0x00;
 		while(!(SPSR & (1<<SPIF)));
 		*data++ = SPDR;
-	}	
+	}
 	// release CS
 	ENC28J60_CONTROL_PORT |= (1<<ENC28J60_CONTROL_CS);
 }
@@ -96,7 +96,7 @@ void enc28j60WriteBuffer(u16 len, u08* data)
 {
 	// assert CS
 	ENC28J60_CONTROL_PORT &= ~(1<<ENC28J60_CONTROL_CS);
-	
+
 	// issue write command
 	SPDR = ENC28J60_WRITE_BUF_MEM;
 	while(!(SPSR & (1<<SPIF)));
@@ -105,7 +105,7 @@ void enc28j60WriteBuffer(u16 len, u08* data)
 		// write data
 		SPDR = *data++;
 		while(!(SPSR & (1<<SPIF)));
-	}	
+	}
 	// release CS
 	ENC28J60_CONTROL_PORT |= (1<<ENC28J60_CONTROL_CS);
 }
@@ -151,7 +151,7 @@ u16 enc28j60PhyRead(u08 address)
 
 	// quit reading
 	enc28j60Write(MICMD, 0x00);
-	
+
 	// get data value
 	data  = enc28j60Read(MIRDL);
 	data |= enc28j60Read(MIRDH);
@@ -163,9 +163,9 @@ void enc28j60PhyWrite(u08 address, u16 data)
 {
 	// set the PHY register address
 	enc28j60Write(MIREGADR, address);
-	
+
 	// write the PHY data
-	enc28j60Write(MIWRL, data);	
+	enc28j60Write(MIWRL, data);
 	enc28j60Write(MIWRH, data>>8);
 
 	// wait until the PHY write completes
@@ -259,7 +259,7 @@ void enc28j60Init(void)
 	// set inter-frame gap (back-to-back)
 	enc28j60Write(MABBIPG, 0x12);
 	// Set the maximum packet size which the controller will accept
-	enc28j60Write(MAMXFLL, MAX_FRAMELEN&0xFF);	
+	enc28j60Write(MAMXFLL, MAX_FRAMELEN&0xFF);
 	enc28j60Write(MAMXFLH, MAX_FRAMELEN>>8);
 
 	// do bank 3 stuff
@@ -311,7 +311,7 @@ void enc28j60PacketSend(unsigned int len1, unsigned char* packet1, unsigned int 
 	// copy the packet into the transmit buffer
 	enc28j60WriteBuffer(len1, packet1);
 	if(len2>0) enc28j60WriteBuffer(len2, packet2);
-	
+
 	// send the contents of the transmit buffer onto the network
 	enc28j60WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
 }
@@ -325,7 +325,7 @@ unsigned int enc28j60PacketReceive(unsigned int maxlen, unsigned char* packet)
 //	if( !(enc28j60Read(EIR) & EIR_PKTIF) )
 	if( enc28j60Read(EPKTCNT) == 0 )
 		return 0;
-	
+
 	// Set the read pointer to the start of the received packet
 	enc28j60Write(ERDPTL, (NextPacketPtr));
 	enc28j60Write(ERDPTH, (NextPacketPtr)>>8);

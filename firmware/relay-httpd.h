@@ -9,8 +9,11 @@
 #define STATE_SEND_RESP 1
 
 struct httpd_state {
-    struct psock sock;
+    struct psock sin;
+    struct psock sout;
+    struct pt outputpt;
     char inputbuf[50];
+    uint8_t state;
     uint8_t request_type;
     char path[50];
 };
