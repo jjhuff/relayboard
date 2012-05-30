@@ -46,7 +46,7 @@ GENDEPFLAGS = -MD -MP -MT $(*F).o -MF dep/$(@F).d
 ## Compile options common for all C compilation units.
 CFLAGS = $(COMMON) $(GENDEPFLAGS)
 CFLAGS += -Inet -Inet_app -I.
-CFLAGS += -Wall -gdwarf-2 -std=gnu99 $(OPTIMIZATION) -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
+CFLAGS += -Wall -gdwarf-2 -std=gnu99 $(OPTIMIZATION) -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums -ffunction-sections -fdata-sections -mcall-prologues
 CFLAGS += $(GENDEPFLAGS)
 
 
