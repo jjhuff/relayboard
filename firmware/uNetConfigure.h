@@ -69,13 +69,9 @@
 #define UIP_DRIPADDR3   1   /**< The fourth octet of the IP address of
 			       the default router */
 
-// Serial Debug configuration
-#define DEBUG_SERIAL 0
-
-
 // which mechanism to use for protothreads
-//#define LC_CONF_INCLUDE "lc-addrlabels.h" // using special GCC feature (uses sligtly less program memory)
-#define LC_CONF_INCLUDE "lc-switch.h" // using switch statements (standard)
+#define LC_CONF_INCLUDE "lc-addrlabels.h" // using special GCC feature (uses sligtly less program memory)
+//#define LC_CONF_INCLUDE "lc-switch.h" // using switch statements (standard)
 
 // UIP debug messages
 #define DEBUG_PRINTF(...) /*printf(__VA_ARGS__)*/

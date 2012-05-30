@@ -57,63 +57,53 @@ HTTPD_CGI_CALL(cgi_welcome,  "welcome",  run_welcome);
 static const struct httpd_cgi_call *calls[] =
 {
     &cgi_hello,
-		&cgi_settings,
-		&cgi_welcome,
+    &cgi_settings,
+    &cgi_welcome,
     NULL
 };
 
-uint8_t http_get_parameters_parse(char *par,uint8_t mx)
-{
-  uint8_t count=0;
-	uint8_t i=0;
-  for(;par[i]&&i<mx;i++)
-  {
-    if(par[i]=='=')
-    {
-      count++;
-      par[i]=0;
-    } else if(par[i]=='&')
-      par[i]=0;
-  }
-  return count;
+uint8_t http_get_parameters_parse(char *par,uint8_t mx) {
+    uint8_t count=0;
+    uint8_t i=0;
+    for(;par[i]&&i<mx;i++) {
+        if(par[i]=='='){
+            count++;
+            par[i]=0;
+        } else if(par[i]=='&')
+            par[i]=0;
+        }
+    return count;
 }
 
-char * http_get_parameter_name(char *par,uint8_t cnt,uint8_t mx)
-{
-  uint8_t i,j;
-  cnt*=2;
-  for(i=0,j=0;j<mx&&i<cnt;j++)
-    if(!par[j]) i++;
-
-  return j==mx?"":par+j;
+char * http_get_parameter_name(char *par,uint8_t cnt,uint8_t mx) {
+    uint8_t i,j;
+    cnt*=2;
+    for(i=0,j=0;j<mx&&i<cnt;j++)
+        if(!par[j]) i++;
+    return j==mx?"":par+j;
 }
 
-char * http_get_parameter_value(char *par,uint8_t cnt,uint8_t mx)
-{
-  uint8_t i,j;
-  cnt*=2;
-  cnt++;
-  for(i=0,j=0;j<mx&&i<cnt;j++)
-    if(!par[j]) i++;
-
-  return j==mx?"":par+j;
+char * http_get_parameter_value(char *par,uint8_t cnt,uint8_t mx) {
+    uint8_t i,j;
+    cnt*=2;
+    cnt++;
+    for(i=0,j=0;j<mx&&i<cnt;j++)
+        if(!par[j]) i++;
+    return j==mx?"":par+j;
 }
 
-void http_url_decode(const char *in,char *out,uint8_t mx)
-{
-  uint8_t i,j;
-	char tmp[3]={0,0,0};
-  for(i=0,j=0;j<mx&&in[i];i++)
-	{
-  	if(in[i]=='%')
-		{
-			tmp[0]=in[++i];
-			tmp[1]=in[++i];
-
-			out[j++]=(char)strtol(tmp,NULL,16);
-		} else
-			out[j++]=in[i];
-	}
+void http_url_decode(const char *in,char *out,uint8_t mx) {
+    uint8_t i,j;
+    char tmp[3]={0,0,0};
+    for(i=0,j=0;j<mx&&in[i];i++) {
+        if(in[i]=='%') {
+            tmp[0]=in[++i];
+            tmp[1]=in[++i];
+            out[j++]=(char)strtol(tmp,NULL,16);
+        } else {
+            out[j++]=in[i];
+        }
+    }
 }
 
 
@@ -126,237 +116,187 @@ static PT_THREAD(nullfunction(struct httpd_state *s, PGM_P ptr))
 
 httpd_cgifunction httpd_cgi(char *name)
 {
-  const struct httpd_cgi_call **f;
+    const struct httpd_cgi_call **f;
 
-#if DEBUG_SERIAL
-	printf_P(PSTR("Calling CGI script:%s\r\n"),name);
-#endif
-
-  /* Find the matching name in the table, return the function. */
-  for(f = calls; *f != NULL; ++f)
-  {
-    if(strncmp((*f)->name, name, strlen((*f)->name)) == 0) {
-      return (*f)->function;
+    /* Find the matching name in the table, return the function. */
+    for(f = calls; *f != NULL; ++f) {
+        if(strncmp((*f)->name, name, strlen((*f)->name)) == 0) {
+            return (*f)->function;
+        }
     }
-  }
-
-#if DEBUG_SERIAL
-	printf_P(PSTR("Script not found\r\n"));
-#endif
 
   return nullfunction;
 }
 
-httpd_cgifunction httpd_cgi_P(PGM_P name)
-{
-  const struct httpd_cgi_call **f;
+httpd_cgifunction httpd_cgi_P(PGM_P name) {
+    const struct httpd_cgi_call **f;
 
-#if DEBUG_SERIAL
-	printf_P(PSTR("Calling CGI script from program memory\r\n"));
-#endif
-
-  /* Find the matching name in the table, return the function. */
-  for(f = calls; *f != NULL; ++f)
-  {
-    if(strncmp_P((*f)->name, name, strlen((*f)->name)) == 0) {
-      return (*f)->function;
+    /* Find the matching name in the table, return the function. */
+    for(f = calls; *f != NULL; ++f) {
+        if(strncmp_P((*f)->name, name, strlen((*f)->name)) == 0) {
+            return (*f)->function;
+        }
     }
-  }
-#if DEBUG_SERIAL
-	printf_P(PSTR("Script not found\r\n"));
-#endif
-  return nullfunction;
+    return nullfunction;
 }
 
-static PT_THREAD(run_hello(struct httpd_state *s, PGM_P ptr))
-{
-	//NOTE:local variables are not preserved during the calls to proto socket functins
-	static char hello_name[20]="";
-	static uint8_t pcount;
-  PSOCK_BEGIN(&s->sout);
-	//check if there are parameters passed
-  if(s->param[0] && (pcount=http_get_parameters_parse(s->param,sizeof(s->param)))>0)
-	{
-		static uint8_t i;
-		//walk through parameters
-		for(i=0;i<pcount;i++)
-		{
-		  static char *pname,*pval;
-			pname=http_get_parameter_name(s->param,i,sizeof(s->param));
-			pval =http_get_parameter_value(s->param,i,sizeof(s->param));
-			if(!strcmp_P(pname,PSTR("name")))
-			{
-				strncpy(hello_name,pval,sizeof(hello_name)-1);
-				break;//we found what we were looking for
-			}
-		}
-		PSOCK_SEND_PSTR(&s->sout,PSTR("<H1>Hello "));
-		PSOCK_SEND_STR(&s->sout,hello_name);
-		PSOCK_SEND_PSTR(&s->sout,PSTR("</H1><br>"));
-  }
+static PT_THREAD(run_hello(struct httpd_state *s, PGM_P ptr)) {
+    //NOTE:local variables are not preserved during the calls to proto socket functins
+    static char hello_name[20]="";
+    static uint8_t pcount;
+    PSOCK_BEGIN(&s->sout);
+    //check if there are parameters passed
+    if(s->param[0] && (pcount=http_get_parameters_parse(s->param,sizeof(s->param)))>0) {
+        static uint8_t i;
+        //walk through parameters
+        for(i=0;i<pcount;i++) {
+            static char *pname,*pval;
+            pname=http_get_parameter_name(s->param,i,sizeof(s->param));
+            pval =http_get_parameter_value(s->param,i,sizeof(s->param));
+            if(!strcmp_P(pname,PSTR("name"))) {
+                strncpy(hello_name,pval,sizeof(hello_name)-1);
+                break;//we found what we were looking for
+            }
+        }
+        PSOCK_SEND_PSTR(&s->sout,PSTR("<H1>Hello "));
+        PSOCK_SEND_STR(&s->sout,hello_name);
+        PSOCK_SEND_PSTR(&s->sout,PSTR("</H1><br>"));
+    }
 
-  PSOCK_SEND_PSTR(&s->sout,PSTR("\
-<form action=\"/hello.shtml\" method=\"get\" bgcolor=\"#808080\">\
-Enter your name: <input type=\"text\" name=\"name\" size=\"10\" value=\""));
+    PSOCK_SEND_PSTR(&s->sout,PSTR("<form action=\"/hello.shtml\" method=\"get\" bgcolor=\"#808080\">Enter your name: <input type=\"text\" name=\"name\" size=\"10\" value=\""));
 
-	PSOCK_SEND_STR(&s->sout,hello_name);
+    PSOCK_SEND_STR(&s->sout,hello_name);
 
-  PSOCK_SEND_PSTR(&s->sout,PSTR("\
-\"/><br><input type = \"submit\" value=\"Send\" size=\"8\"> <input type = \"reset\"  value=\"cancel\" size=\"8\">"));
-  PSOCK_END(&s->sout);
+    PSOCK_SEND_PSTR(&s->sout,PSTR("\"/><br><input type = \"submit\" value=\"Send\" size=\"8\"> <input type = \"reset\"  value=\"cancel\" size=\"8\">"));
+    PSOCK_END(&s->sout);
 }
 
-static uint8_t decode_ip(char *in,uint8_t *out)
-{
-	uint8_t i;
-	char tmp[20];
-	strncpy(tmp,in,sizeof(tmp));
-	char *dig;
-	dig=strtok(tmp,".");
+static uint8_t decode_ip(char *in,uint8_t *out) {
+    uint8_t i;
+    char tmp[20];
+    strncpy(tmp,in,sizeof(tmp));
+    char *dig;
+    dig=strtok(tmp,".");
 
-	for(i=0 ; i<4 && dig ;i++,dig=strtok(NULL,"."))
-		out[i]=(uint8_t)strtoul(dig,NULL,10);
+    for(i=0 ; i<4 && dig ;i++,dig=strtok(NULL,"."))
+        out[i]=(uint8_t)strtoul(dig,NULL,10);
 
-	return i;
+    return i;
 }
 
-static uint8_t decode_mac(char *in,uint8_t *out)
-{
-	char tmp[20];
-	http_url_decode(in,tmp,sizeof(tmp)-1);
+static uint8_t decode_mac(char *in,uint8_t *out) {
+    char tmp[20];
+    http_url_decode(in,tmp,sizeof(tmp)-1);
 
-	uint8_t i;
-	char *dig;
-	dig=strtok(tmp,":");
+    uint8_t i;
+    char *dig;
+    dig=strtok(tmp,":");
 
-	for(i=0 ; i<6 && dig ;i++,dig=strtok(NULL,":"))
-		out[i]=(uint8_t)strtoul(dig,NULL,16);
+    for(i=0 ; i<6 && dig ;i++,dig=strtok(NULL,":"))
+        out[i]=(uint8_t)strtoul(dig,NULL,16);
 
-	return i;
+    return i;
 }
 
 
-static PT_THREAD(run_settings(struct httpd_state *s, PGM_P ptr))
-{
-	//NOTE:local variables are not preserved during the calls to proto socket functins
-	static uint8_t pcount;
-  PSOCK_BEGIN(&s->sout);
-	//check if there are parameters passed
-  if(s->param[0] && (pcount=http_get_parameters_parse(s->param,sizeof(s->param)))>0)
-	{
+static PT_THREAD(run_settings(struct httpd_state *s, PGM_P ptr)) {
+    //NOTE:local variables are not preserved during the calls to proto socket functins
+    static uint8_t pcount;
+    PSOCK_BEGIN(&s->sout);
+    //check if there are parameters passed
+    if(s->param[0] && (pcount=http_get_parameters_parse(s->param,sizeof(s->param)))>0) {
+        static uint8_t i;
+        static uint8_t result;
+        result=(pcount==4 || pcount==5 ); //correct number of parameters
+        _enable_dhcp=0;
+        //walk through parameters
+        for(i=0;i<pcount;i++) {
+            static char *pname,*pval;
+            pname=http_get_parameter_name(s->param,i,sizeof(s->param));
+            pval =http_get_parameter_value(s->param,i,sizeof(s->param));
 
-		static uint8_t i,j;
-		static uint8_t result;
-		result=(pcount==4 || pcount==5 ); //correct number of parameters
-		_enable_dhcp=0;
-		//walk through parameters
-		for(i=0;i<pcount;i++)
-		{
-		  static char *pname,*pval;
-			pname=http_get_parameter_name(s->param,i,sizeof(s->param));
-			pval =http_get_parameter_value(s->param,i,sizeof(s->param));
+            if(!strcmp_P(pname,PSTR("mac")) ) {
+                result = result && ( decode_mac(pval,_eth_addr) == 6);
+            } else if(!strcmp_P(pname,PSTR("dhcp")) ) {
+                _enable_dhcp=(pval[0]=='1');
+            } else if(!strcmp_P(pname,PSTR("ip")) ) {
+                result = result && (decode_ip(pval,_ip_addr)==4);
+            } else if(!strcmp_P(pname,PSTR("netmask")) ) {
+                result = result && (decode_ip(pval,_net_mask)==4);
+            } else if(!strcmp_P(pname,PSTR("gw")) ) {
+                result = result && (decode_ip(pval,_gateway)==4);
+            } else {
+                result=0; //unknown parameter, probably an error!
+            }
+        }
+        if(result) {
+            eeprom_write_byte(&ee_enable_dhcp,_enable_dhcp);
+            eeprom_write_block (_eth_addr,&ee_eth_addr,6);
+            eeprom_write_block (_ip_addr, &ee_ip_addr, 4);
+            eeprom_write_block (_net_mask,&ee_net_mask,4);
+            eeprom_write_block (_gateway, &ee_gateway, 4);
 
-			if(!strcmp_P(pname,PSTR("mac")) )
-			{
-				result = result && ( decode_mac(pval,_eth_addr) == 6);
-			} else if(!strcmp_P(pname,PSTR("dhcp")) )
-			{
-				_enable_dhcp=(pval[0]=='1');
-			} else if(!strcmp_P(pname,PSTR("ip")) )
-			{
+            PSOCK_SEND_PSTR(&s->sout,PSTR("<b>Parameters Accepted, cycle power to make active!</b>"));
+        } else {
+            PSOCK_SEND_PSTR(&s->sout,PSTR("<b>Parameters incorrect!</b>"));
+        }
+    }
 
-				result = result && (decode_ip(pval,_ip_addr)==4);
-			} else if(!strcmp_P(pname,PSTR("netmask")) )
-			{
-				result = result && (decode_ip(pval,_net_mask)==4);
-			} else if(!strcmp_P(pname,PSTR("gw")) )
-			{
-				result = result && (decode_ip(pval,_gateway)==4);
-			} else {
-
-#if DEBUG_SERIAL
-				printf_P(PSTR("Unknown:%s = %s\r\n"),pname,pval);
-#endif
-				result=0; //unknown parameter, probably an error!
-			}
-		}
-		if(result) {
-			eeprom_write_byte(&ee_enable_dhcp,_enable_dhcp);
-			eeprom_write_block (_eth_addr,&ee_eth_addr,6);
-			eeprom_write_block (_ip_addr, &ee_ip_addr, 4);
-			eeprom_write_block (_net_mask,&ee_net_mask,4);
-			eeprom_write_block (_gateway, &ee_gateway, 4);
-
-			PSOCK_SEND_PSTR(&s->sout,PSTR("<b>Parameters Accepted, cycle power to make active!</b>"));
-		} else {
-			PSOCK_SEND_PSTR(&s->sout,PSTR("<b>Parameters incorrect!</b>"));
-		}
-  }
-
-	_enable_dhcp=eeprom_read_byte(&ee_enable_dhcp);;
-	eeprom_read_block ((void *)_eth_addr,(const void *)&ee_eth_addr,6);
+    _enable_dhcp=eeprom_read_byte(&ee_enable_dhcp);;
+    eeprom_read_block ((void *)_eth_addr,(const void *)&ee_eth_addr,6);
 
     uint8_t ip[8];
 
-	char temp[30];
-  PSOCK_SEND_PSTR(&s->sout,PSTR("\
-<form action=\"/settings.shtml\" method=\"get\" bgcolor=\"#808080\">\
-<table>\
-<tr><td>MAC:</td><td><input type=\"text\" name=\"mac\" size=\"18\" maxlength=\"18\" value=\""));
+    char temp[30];
+    PSOCK_SEND_PSTR(&s->sout,PSTR("<form action=\"/settings.shtml\" method=\"get\" bgcolor=\"#808080\"><table><tr><td>MAC:</td><td><input type=\"text\" name=\"mac\" size=\"18\" maxlength=\"18\" value=\""));
 
-	snprintf_P(temp,sizeof(temp),PSTR("%02x:%02x:%02x:%02x:%02x:%02x"),
-	 (int)_eth_addr[0],(int)_eth_addr[1],(int)_eth_addr[2],
-	 (int)_eth_addr[3],(int)_eth_addr[4],(int)_eth_addr[5]);
+    snprintf_P(temp,sizeof(temp),PSTR("%02x:%02x:%02x:%02x:%02x:%02x"),
+        (int)_eth_addr[0],(int)_eth_addr[1],(int)_eth_addr[2],
+        (int)_eth_addr[3],(int)_eth_addr[4],(int)_eth_addr[5]);
 
-	PSOCK_SEND_STR(&s->sout,temp);
+    PSOCK_SEND_STR(&s->sout,temp);
 
-	PSOCK_SEND_PSTR(&s->sout,PSTR("\"></td></tr>\
-<tr><td>DHCP:</td><td><input type=\"checkbox\" name=\"dhcp\" value=\"1\""));
+    PSOCK_SEND_PSTR(&s->sout,PSTR("\"></td></tr><tr><td>DHCP:</td><td><input type=\"checkbox\" name=\"dhcp\" value=\"1\""));
 
-	if(_enable_dhcp)
-		PSOCK_SEND_PSTR(&s->sout,PSTR("CHECKED"));
+    if(_enable_dhcp)
+        PSOCK_SEND_PSTR(&s->sout,PSTR("CHECKED"));
 
-	PSOCK_SEND_PSTR(&s->sout,PSTR("/></td></tr>\
-<tr><td>IP:</td><td><input type=\"text\" name=\"ip\" size=\"15\" maxlength=\"15\" value=\""));
+    PSOCK_SEND_PSTR(&s->sout,PSTR("/></td></tr><tr><td>IP:</td><td><input type=\"text\" name=\"ip\" size=\"15\" maxlength=\"15\" value=\""));
 
-	eeprom_read_block ((void *)ip, (const void *)&ee_ip_addr, 4);
-	snprintf_P(temp,sizeof(temp),PSTR("%d.%d.%d.%d"),
-	 (int)ip[0],(int)ip[1],(int)ip[2],(int)ip[3]);
+    eeprom_read_block ((void *)ip, (const void *)&ee_ip_addr, 4);
+    snprintf_P(temp,sizeof(temp),PSTR("%d.%d.%d.%d"),
+        (int)ip[0],(int)ip[1],(int)ip[2],(int)ip[3]);
 
-	PSOCK_SEND_STR(&s->sout,temp);
+    PSOCK_SEND_STR(&s->sout,temp);
 
-    PSOCK_SEND_PSTR(&s->sout,PSTR("\"></td></tr>\
-<tr><td>Netmask:</td><td><input type=\"text\" name=\"netmask\" size=\"15\" maxlength=\"15\" value=\""));
+    PSOCK_SEND_PSTR(&s->sout,PSTR("\"></td></tr><tr><td>Netmask:</td><td><input type=\"text\" name=\"netmask\" size=\"15\" maxlength=\"15\" value=\""));
 
-	eeprom_read_block ((void *)ip,(const void *)&ee_net_mask,4);
-	snprintf_P(temp,sizeof(temp),PSTR("%d.%d.%d.%d"),
-	 (int)ip[0],(int)ip[1],(int)ip[2],(int)ip[3]);
+    eeprom_read_block ((void *)ip,(const void *)&ee_net_mask,4);
+    snprintf_P(temp,sizeof(temp),PSTR("%d.%d.%d.%d"),
+        (int)ip[0],(int)ip[1],(int)ip[2],(int)ip[3]);
 
-	PSOCK_SEND_STR(&s->sout,temp);
+    PSOCK_SEND_STR(&s->sout,temp);
 
-	PSOCK_SEND_PSTR(&s->sout,PSTR("\"/></td></tr>\
-<tr><td>Gateway:</td><td><input type=\"text\" name=\"gw\" size=\"15\" maxlength=\"15\" value=\""));
+    PSOCK_SEND_PSTR(&s->sout,PSTR("\"/></td></tr><tr><td>Gateway:</td><td><input type=\"text\" name=\"gw\" size=\"15\" maxlength=\"15\" value=\""));
 
-	eeprom_read_block ((void *)ip, (const void *)&ee_gateway, 4);
-	snprintf_P(temp,sizeof(temp),PSTR("%d.%d.%d.%d"),
-	 (int)ip[0],(int)ip[1],(int)ip[2],(int)ip[3]);
+    eeprom_read_block ((void *)ip, (const void *)&ee_gateway, 4);
+    snprintf_P(temp,sizeof(temp),PSTR("%d.%d.%d.%d"),
+        (int)ip[0],(int)ip[1],(int)ip[2],(int)ip[3]);
 
-	PSOCK_SEND_STR(&s->sout,temp);
+    PSOCK_SEND_STR(&s->sout,temp);
 
-	PSOCK_SEND_PSTR(&s->sout,PSTR("\"/></td></tr>\
-<tr align=\"justify\"><td colspan=2><INPUT TYPE=submit VALUE=\"Submit\">  <INPUT TYPE=reset VALUE=\"Reset\"></td></tr>\
+    PSOCK_SEND_PSTR(&s->sout,PSTR("\"/></td></tr><tr align=\"justify\"><td colspan=2><INPUT TYPE=submit VALUE=\"Submit\">  <INPUT TYPE=reset VALUE=\"Reset\"></td></tr>\
 </table></form>"));
 
-  PSOCK_END(&s->sout);
+    PSOCK_END(&s->sout);
 }
 
-static PT_THREAD(run_welcome(struct httpd_state *s, PGM_P ptr))
-{
-	//NOTE:local variables are not preserved during the calls to proto socket functins
-	char temp[30];
-	sprintf_P(temp,PSTR("System time:%u ticks"),(unsigned int)clock_time());
+static PT_THREAD(run_welcome(struct httpd_state *s, PGM_P ptr)) {
+    //NOTE:local variables are not preserved during the calls to proto socket functins
+    char temp[30];
+    sprintf_P(temp,PSTR("System time:%u ticks"),(unsigned int)clock_time());
 
-  PSOCK_BEGIN(&s->sout);
-	PSOCK_SEND_STR(&s->sout,temp);
-  PSOCK_END(&s->sout);
+    PSOCK_BEGIN(&s->sout);
+    PSOCK_SEND_STR(&s->sout,temp);
+    PSOCK_END(&s->sout);
 }

@@ -62,8 +62,6 @@ void enc28j60PhyWrite(u8 address, u16 data);
 void enc28j60Init(uint8_t *eth_addr,u8 DuplexState);
 
 //dummy ?
-void enc28j60BeginPacketSend(u16 packetLength);
-void enc28j60EndPacketSend(void);
 u8   enc28j60PollPacketSending(void);
 //
 
@@ -84,14 +82,6 @@ u16 enc28j60BeginPacketReceive(void);
 void enc28j60EndPacketReceive(void);
 void enc28j60PacketReceive(unsigned char* packet, u16 maxlen);
 
-//! execute procedure for recovering from a receive overflow
-/// this should be done when the receive memory fills up with packets
-void enc28j60ReceiveOverflowRecover(void);
-
-u8 enc28j60getrev(void);
 u8 enc28j60linkup(void);
-
-//! formatted print of important ENC28J60 registers
-void enc28j60RegDump(void);
 
 #endif
