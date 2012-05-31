@@ -50,19 +50,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-//HTTPD_CGI_CALL(cgi_hello,    "hello",    run_hello);
 HTTPD_CGI_CALL(cgi_settings, "settings", run_settings);
 HTTPD_CGI_CALL(cgi_welcome,  "welcome",  run_welcome);
 
 static const struct httpd_cgi_call *calls[] =
 {
-//    &cgi_hello,
     &cgi_settings,
     &cgi_welcome,
     NULL
 };
 
-uint8_t http_get_parameters_parse(char *par,uint8_t mx) {
+uint8_t http_get_parameters_parse(char *par, uint8_t mx) {
     uint8_t count=0;
     uint8_t i=0;
     for(;par[i]&&i<mx;i++) {
@@ -75,7 +73,7 @@ uint8_t http_get_parameters_parse(char *par,uint8_t mx) {
     return count;
 }
 
-char * http_get_parameter_name(char *par,uint8_t cnt,uint8_t mx) {
+char * http_get_parameter_name(char *par, uint8_t cnt, uint8_t mx) {
     uint8_t i,j;
     cnt*=2;
     for(i=0,j=0;j<mx&&i<cnt;j++)
@@ -83,7 +81,7 @@ char * http_get_parameter_name(char *par,uint8_t cnt,uint8_t mx) {
     return j==mx?"":par+j;
 }
 
-char * http_get_parameter_value(char *par,uint8_t cnt,uint8_t mx) {
+char* http_get_parameter_value(char *par, uint8_t cnt, uint8_t mx) {
     uint8_t i,j;
     cnt*=2;
     cnt++;
@@ -92,7 +90,7 @@ char * http_get_parameter_value(char *par,uint8_t cnt,uint8_t mx) {
     return j==mx?"":par+j;
 }
 
-void http_url_decode(const char *in,char *out,uint8_t mx) {
+void http_url_decode(const char *in, char *out, uint8_t mx) {
     uint8_t i,j;
     char tmp[3]={0,0,0};
     for(i=0,j=0;j<mx&&in[i];i++) {
@@ -139,40 +137,8 @@ httpd_cgifunction httpd_cgi_P(PGM_P name) {
     }
     return nullfunction;
 }
-/*
-static PT_THREAD(run_hello(struct httpd_state *s, PGM_P ptr)) {
-    //NOTE:local variables are not preserved during the calls to proto socket functins
-    static char hello_name[20]="";
-    static uint8_t pcount;
-    PSOCK_BEGIN(&s->sout);
-    //check if there are parameters passed
-    if(s->param[0] && (pcount=http_get_parameters_parse(s->param,sizeof(s->param)))>0) {
-        static uint8_t i;
-        //walk through parameters
-        for(i=0;i<pcount;i++) {
-            static char *pname,*pval;
-            pname=http_get_parameter_name(s->param,i,sizeof(s->param));
-            pval =http_get_parameter_value(s->param,i,sizeof(s->param));
-            if(!strcmp_P(pname,PSTR("name"))) {
-                strncpy(hello_name,pval,sizeof(hello_name)-1);
-                break;//we found what we were looking for
-            }
-        }
-        PSOCK_SEND_PSTR(&s->sout,PSTR("<H1>Hello "));
-        PSOCK_SEND_STR(&s->sout,hello_name);
-        PSOCK_SEND_PSTR(&s->sout,PSTR("</H1><br>"));
-    }
 
-    PSOCK_SEND_PSTR(&s->sout,PSTR("<form action=\"/hello.shtml\" method=\"get\" bgcolor=\"#808080\">Enter your name: <input type=\"text\" name=\"name\" size=\"10\" value=\""));
-
-    PSOCK_SEND_STR(&s->sout,hello_name);
-
-    PSOCK_SEND_PSTR(&s->sout,PSTR("\"/><br><input type = \"submit\" value=\"Send\" size=\"8\"> <input type = \"reset\"  value=\"cancel\" size=\"8\">"));
-    PSOCK_END(&s->sout);
-}
-*/
-
-static uint8_t decode_ip(char *in,uint8_t *out) {
+static uint8_t decode_ip(char *in, uint8_t *out) {
     uint8_t i;
     char tmp[20];
     strncpy(tmp,in,sizeof(tmp));
@@ -184,21 +150,6 @@ static uint8_t decode_ip(char *in,uint8_t *out) {
 
     return i;
 }
-
-static uint8_t decode_mac(char *in,uint8_t *out) {
-    char tmp[20];
-    http_url_decode(in,tmp,sizeof(tmp)-1);
-
-    uint8_t i;
-    char *dig;
-    dig=strtok(tmp,":");
-
-    for(i=0 ; i<6 && dig ;i++,dig=strtok(NULL,":"))
-        out[i]=(uint8_t)strtoul(dig,NULL,16);
-
-    return i;
-}
-
 
 static PT_THREAD(run_settings(struct httpd_state *s, PGM_P ptr)) {
     uint8_t pcount;
