@@ -203,7 +203,7 @@ void enc28j60SoftwareReset(void)
 }
 
 
-void enc28j60Init(uint8_t *eth_addr,u8 DuplexState)
+void enc28j60Init(uint8_t *eth_addr)
 {
     // initialize I/O
     sbi(ENC28J60_CONTROL_DDR,  ENC28J60_SS_PIN);
@@ -337,7 +337,7 @@ void enc28j60PacketSend(u8 * packet, u16 len)
     enc28j60WriteOp(ENC28J60_BIT_FIELD_SET, ECON1, ECON1_TXRTS);
 }
 
-u8   enc28j60PollPacketSending(void)
+u8 enc28j60PollPacketSending(void)
 {
     return enc28j60Read(ECON1) & ECON1_TXRTS;
 }

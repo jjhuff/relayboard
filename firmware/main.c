@@ -76,7 +76,6 @@ int main(void) {
     /* Disable Clock Division */
     clock_prescale_set(clock_div_2);
 
-
     // Read and set the MAC address
     uint8_t eth_addr[6];
     eeprom_read_block ((void *)eth_addr, (const void *)&ee_eth_addr, 6);
@@ -99,8 +98,8 @@ int main(void) {
     timer_set(&periodic_timer, CLOCK_SECOND / 2);
     timer_set(&arp_timer, CLOCK_SECOND * 10);
 
-    uint8_t enable_dhcp=eeprom_read_byte(&ee_enable_dhcp);
     uip_ipaddr_t ipaddr;
+    uint8_t enable_dhcp = eeprom_read_byte(&ee_enable_dhcp);
     if(enable_dhcp) {
         uip_ipaddr(ipaddr, 0, 0, 0, 0);
         uip_sethostaddr(ipaddr);
@@ -123,7 +122,6 @@ int main(void) {
         uip_ipaddr(ipaddr, ip[0], ip[1], ip[2], ip[3]);
         uip_setdraddr(ipaddr);
     }
-
 
     httpd_init();
 
@@ -203,6 +201,6 @@ void NetTask(void) {
             uip_arp_timer();
         }
     }
-    while(nic_sending()) {asm("nop");}; //wait untill packet is sent away
+    //while(nic_sending()) {asm("nop");}; //wait untill packet is sent away
 }
 

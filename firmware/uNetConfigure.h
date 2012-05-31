@@ -1,11 +1,6 @@
 #ifndef __UNETCONFIGURE_H__
 #define __UNETCONFIGURE_H__
 
-// ethernet configuration
-
-#define ENC28J60_ENABLE_DUPLEX  0
-
-
 /**
  * uIP buffer size (maximum packat size, DHCP needs at least 400bytes)
  */

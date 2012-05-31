@@ -59,7 +59,7 @@ u16 enc28j60PhyRead(u8 address);
 void enc28j60PhyWrite(u8 address, u16 data);
 
 //! initialize the ethernet interface for transmit/receive
-void enc28j60Init(uint8_t *eth_addr,u8 DuplexState);
+void enc28j60Init(uint8_t *eth_addr);
 
 //dummy ?
 u8   enc28j60PollPacketSending(void);

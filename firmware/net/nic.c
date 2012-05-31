@@ -10,14 +10,9 @@
 #include "nic.h"
 #include "enc28j60.h"
 
-#define IP_TCP_HEADER_LENGTH 40
-#define TOTAL_HEADER_LENGTH (IP_TCP_HEADER_LENGTH+ETHERNET_HEADER_LENGTH)
-
-
 void nic_init(uint8_t *eth_addr) {
-    enc28j60Init(eth_addr,ENC28J60_ENABLE_DUPLEX);
+    enc28j60Init(eth_addr);
 }
-
 
 void nic_send(void)
 {
