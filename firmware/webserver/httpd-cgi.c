@@ -50,13 +50,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-HTTPD_CGI_CALL(cgi_hello,    "hello",    run_hello);
+//HTTPD_CGI_CALL(cgi_hello,    "hello",    run_hello);
 HTTPD_CGI_CALL(cgi_settings, "settings", run_settings);
 HTTPD_CGI_CALL(cgi_welcome,  "welcome",  run_welcome);
 
 static const struct httpd_cgi_call *calls[] =
 {
-    &cgi_hello,
+//    &cgi_hello,
     &cgi_settings,
     &cgi_welcome,
     NULL
@@ -139,7 +139,7 @@ httpd_cgifunction httpd_cgi_P(PGM_P name) {
     }
     return nullfunction;
 }
-
+/*
 static PT_THREAD(run_hello(struct httpd_state *s, PGM_P ptr)) {
     //NOTE:local variables are not preserved during the calls to proto socket functins
     static char hello_name[20]="";
@@ -170,6 +170,7 @@ static PT_THREAD(run_hello(struct httpd_state *s, PGM_P ptr)) {
     PSOCK_SEND_PSTR(&s->sout,PSTR("\"/><br><input type = \"submit\" value=\"Send\" size=\"8\"> <input type = \"reset\"  value=\"cancel\" size=\"8\">"));
     PSOCK_END(&s->sout);
 }
+*/
 
 static uint8_t decode_ip(char *in,uint8_t *out) {
     uint8_t i;
@@ -200,93 +201,81 @@ static uint8_t decode_mac(char *in,uint8_t *out) {
 
 
 static PT_THREAD(run_settings(struct httpd_state *s, PGM_P ptr)) {
-    //NOTE:local variables are not preserved during the calls to proto socket functins
-    static uint8_t pcount;
+    uint8_t pcount;
+    uint8_t ip[4];
+
     PSOCK_BEGIN(&s->sout);
+
     //check if there are parameters passed
     if(s->param[0] && (pcount=http_get_parameters_parse(s->param,sizeof(s->param)))>0) {
-        static uint8_t i;
-        static uint8_t result;
-        result=(pcount==4 || pcount==5 ); //correct number of parameters
-        _enable_dhcp=0;
         //walk through parameters
-        for(i=0;i<pcount;i++) {
-            static char *pname,*pval;
-            pname=http_get_parameter_name(s->param,i,sizeof(s->param));
-            pval =http_get_parameter_value(s->param,i,sizeof(s->param));
+        for(uint8_t i=0; i<pcount; i++) {
+            char *pname, *pval;
+            pname= http_get_parameter_name(s->param, i, sizeof(s->param));
+            pval = http_get_parameter_value(s->param, i, sizeof(s->param));
 
-            if(!strcmp_P(pname,PSTR("mac")) ) {
-                result = result && ( decode_mac(pval,_eth_addr) == 6);
-            } else if(!strcmp_P(pname,PSTR("dhcp")) ) {
-                _enable_dhcp=(pval[0]=='1');
-            } else if(!strcmp_P(pname,PSTR("ip")) ) {
-                result = result && (decode_ip(pval,_ip_addr)==4);
-            } else if(!strcmp_P(pname,PSTR("netmask")) ) {
-                result = result && (decode_ip(pval,_net_mask)==4);
-            } else if(!strcmp_P(pname,PSTR("gw")) ) {
-                result = result && (decode_ip(pval,_gateway)==4);
-            } else {
-                result=0; //unknown parameter, probably an error!
+            if(!strcmp_P(pname, PSTR("dhcp")) ) {
+                uint8_t enable_dhcp = (pval[0]=='1');
+                eeprom_write_byte(&ee_enable_dhcp, enable_dhcp);
+
+            } else if(!strcmp_P(pname, PSTR("ip")) ) {
+                if(decode_ip(pval, ip) == 4)
+                    eeprom_write_block(ip, &ee_ip_addr, 4);
+
+            } else if(!strcmp_P(pname, PSTR("netmask")) ) {
+                if(decode_ip(pval, ip) == 4)
+                    eeprom_write_block(ip, &ee_net_mask, 4);
+
+            } else if(!strcmp_P(pname, PSTR("gw")) ) {
+                if(decode_ip(pval, ip) == 4)
+                    eeprom_write_block(ip, &ee_gateway, 4);
             }
         }
-        if(result) {
-            eeprom_write_byte(&ee_enable_dhcp,_enable_dhcp);
-            eeprom_write_block (_eth_addr,&ee_eth_addr,6);
-            eeprom_write_block (_ip_addr, &ee_ip_addr, 4);
-            eeprom_write_block (_net_mask,&ee_net_mask,4);
-            eeprom_write_block (_gateway, &ee_gateway, 4);
-
-            PSOCK_SEND_PSTR(&s->sout,PSTR("<b>Parameters Accepted, cycle power to make active!</b>"));
-        } else {
-            PSOCK_SEND_PSTR(&s->sout,PSTR("<b>Parameters incorrect!</b>"));
-        }
+        PSOCK_SEND_PSTR(&s->sout, PSTR("<b>Parameters Accepted, cycle power to make active!</b>"));
     }
 
-    _enable_dhcp=eeprom_read_byte(&ee_enable_dhcp);;
-    eeprom_read_block ((void *)_eth_addr,(const void *)&ee_eth_addr,6);
-
-    uint8_t ip[8];
-
+    // Generate the output
     char temp[30];
-    PSOCK_SEND_PSTR(&s->sout,PSTR("<form action=\"/settings.shtml\" method=\"get\" bgcolor=\"#808080\"><table><tr><td>MAC:</td><td><input type=\"text\" name=\"mac\" size=\"18\" maxlength=\"18\" value=\""));
+    PSOCK_SEND_PSTR(&s->sout, PSTR("<form action='/settings.shtml' method='get'><table>"));
 
-    snprintf_P(temp,sizeof(temp),PSTR("%02x:%02x:%02x:%02x:%02x:%02x"),
-        (int)_eth_addr[0],(int)_eth_addr[1],(int)_eth_addr[2],
-        (int)_eth_addr[3],(int)_eth_addr[4],(int)_eth_addr[5]);
+    // Print the MAC
+    uint8_t eth_addr[6];
+    PSOCK_SEND_PSTR(&s->sout, PSTR("<tr><td>MAC:</td><td>"));
+    eeprom_read_block ((void *)eth_addr, (const void *)&ee_eth_addr, 6);
+    snprintf_P(temp, sizeof(temp), PSTR("%02x:%02x:%02x:%02x:%02x:%02x"),
+        eth_addr[0], eth_addr[1], eth_addr[2], eth_addr[3], eth_addr[4], eth_addr[5]);
+    PSOCK_SEND_STR(&s->sout,temp);
+    PSOCK_SEND_PSTR(&s->sout, PSTR("</td></tr>"));
 
+    // DHCP Enabled
+    PSOCK_SEND_PSTR(&s->sout, PSTR("<tr><td>DHCP:</td><td><select name='dhcp'>"));
+    uint8_t enable_dhcp=eeprom_read_byte(&ee_enable_dhcp);
+    if(enable_dhcp)
+        PSOCK_SEND_PSTR(&s->sout, PSTR("<option value='1' selected>Enabled</option><option value='0'>Disabled</option>"));
+    else
+        PSOCK_SEND_PSTR(&s->sout, PSTR("<option value='1'>Enabled</option><option value='0' selected>Disabled</option>"));
+    PSOCK_SEND_PSTR(&s->sout, PSTR("</td></tr>"));
+
+
+    // IP address
+    PSOCK_SEND_PSTR(&s->sout, PSTR("<tr><td>IP:</td><td><input type=\"text\" name=\"ip\" size=\"15\" maxlength=\"15\" value=\""));
+    eeprom_read_block((void *)ip, (const void *)&ee_ip_addr, 4);
+    snprintf_P(temp, sizeof(temp), PSTR("%d.%d.%d.%d"), ip[0], ip[1], ip[2], ip[3]);
     PSOCK_SEND_STR(&s->sout,temp);
 
-    PSOCK_SEND_PSTR(&s->sout,PSTR("\"></td></tr><tr><td>DHCP:</td><td><input type=\"checkbox\" name=\"dhcp\" value=\"1\""));
-
-    if(_enable_dhcp)
-        PSOCK_SEND_PSTR(&s->sout,PSTR("CHECKED"));
-
-    PSOCK_SEND_PSTR(&s->sout,PSTR("/></td></tr><tr><td>IP:</td><td><input type=\"text\" name=\"ip\" size=\"15\" maxlength=\"15\" value=\""));
-
-    eeprom_read_block ((void *)ip, (const void *)&ee_ip_addr, 4);
-    snprintf_P(temp,sizeof(temp),PSTR("%d.%d.%d.%d"),
-        (int)ip[0],(int)ip[1],(int)ip[2],(int)ip[3]);
-
-    PSOCK_SEND_STR(&s->sout,temp);
-
+    // Netmask
     PSOCK_SEND_PSTR(&s->sout,PSTR("\"></td></tr><tr><td>Netmask:</td><td><input type=\"text\" name=\"netmask\" size=\"15\" maxlength=\"15\" value=\""));
-
-    eeprom_read_block ((void *)ip,(const void *)&ee_net_mask,4);
-    snprintf_P(temp,sizeof(temp),PSTR("%d.%d.%d.%d"),
-        (int)ip[0],(int)ip[1],(int)ip[2],(int)ip[3]);
-
+    eeprom_read_block((void *)ip, (const void *)&ee_net_mask, 4);
+    snprintf_P(temp, sizeof(temp), PSTR("%d.%d.%d.%d"), ip[0], ip[1], ip[2], ip[3]);
     PSOCK_SEND_STR(&s->sout,temp);
 
+    // Gateway
     PSOCK_SEND_PSTR(&s->sout,PSTR("\"/></td></tr><tr><td>Gateway:</td><td><input type=\"text\" name=\"gw\" size=\"15\" maxlength=\"15\" value=\""));
-
-    eeprom_read_block ((void *)ip, (const void *)&ee_gateway, 4);
-    snprintf_P(temp,sizeof(temp),PSTR("%d.%d.%d.%d"),
-        (int)ip[0],(int)ip[1],(int)ip[2],(int)ip[3]);
-
+    eeprom_read_block((void *)ip, (const void *)&ee_gateway, 4);
+    snprintf_P(temp, sizeof(temp), PSTR("%d.%d.%d.%d"), ip[0], ip[1], ip[2], ip[3]);
     PSOCK_SEND_STR(&s->sout,temp);
 
-    PSOCK_SEND_PSTR(&s->sout,PSTR("\"/></td></tr><tr align=\"justify\"><td colspan=2><INPUT TYPE=submit VALUE=\"Submit\">  <INPUT TYPE=reset VALUE=\"Reset\"></td></tr>\
-</table></form>"));
+    PSOCK_SEND_PSTR(&s->sout,PSTR("\"/></td></tr><tr align=\"justify\"><td colspan=2><INPUT TYPE=submit VALUE=\"Submit\"></td></tr></table></form>"));
 
     PSOCK_END(&s->sout);
 }
@@ -294,7 +283,7 @@ static PT_THREAD(run_settings(struct httpd_state *s, PGM_P ptr)) {
 static PT_THREAD(run_welcome(struct httpd_state *s, PGM_P ptr)) {
     //NOTE:local variables are not preserved during the calls to proto socket functins
     char temp[30];
-    sprintf_P(temp,PSTR("System time:%u ticks"),(unsigned int)clock_time());
+    sprintf_P(temp,PSTR("System time: %u ticks"),(unsigned int)clock_time());
 
     PSOCK_BEGIN(&s->sout);
     PSOCK_SEND_STR(&s->sout,temp);

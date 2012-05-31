@@ -33,21 +33,11 @@ static struct uip_eth_addr uNet_eth_address;
 
 //EEPROM parameters (TCP/IP parameters)
 uint8_t EEMEM ee_enable_dhcp = USE_DHCP;
-
 uint8_t EEMEM ee_eth_addr[6] = {UIP_ETHADDR0,UIP_ETHADDR1,UIP_ETHADDR2,UIP_ETHADDR3,UIP_ETHADDR4,UIP_ETHADDR5};
-
 uint8_t EEMEM ee_ip_addr[4] = {UIP_IPADDR0, UIP_IPADDR1, UIP_IPADDR2, UIP_IPADDR3};
-
 uint8_t EEMEM ee_net_mask[4] = {UIP_NETMASK0, UIP_NETMASK1, UIP_NETMASK2, UIP_NETMASK3};
-
 uint8_t EEMEM ee_gateway[4] = {UIP_DRIPADDR0, UIP_DRIPADDR1, UIP_DRIPADDR2, UIP_DRIPADDR3};
 
-// TCP/IP parameters in data memory
-uint8_t _enable_dhcp;
-uint8_t _eth_addr[6];
-uint8_t _ip_addr[4];
-uint8_t _net_mask[4];
-uint8_t _gateway[4];
 
 clock_time_t clock_time(void) {
   return timerCounter;
@@ -86,16 +76,13 @@ int main(void) {
     /* Disable Clock Division */
     clock_prescale_set(clock_div_2);
 
-    _enable_dhcp=eeprom_read_byte(&ee_enable_dhcp);
-    eeprom_read_block ((void *)_eth_addr, (const void *)&ee_eth_addr,6);
 
+    // Read and set the MAC address
+    uint8_t eth_addr[6];
+    eeprom_read_block ((void *)eth_addr, (const void *)&ee_eth_addr, 6);
     for(i=0;i<6;i++)
-        uNet_eth_address.addr[i]=_eth_addr[i];
-
-    nic_init(_eth_addr);
-
-    uip_ipaddr_t ipaddr;
-
+        uNet_eth_address.addr[i]=eth_addr[i];
+    nic_init(eth_addr);
     uip_setethaddr(uNet_eth_address);
 
     //init uIP
@@ -109,35 +96,36 @@ int main(void) {
 
     sei();
 
-    if(!_enable_dhcp) {
-        eeprom_read_block ((void *)_ip_addr, (const void *)&ee_ip_addr,4);
-        eeprom_read_block ((void *)_net_mask,(const void *)&ee_net_mask,4);
-        eeprom_read_block ((void *)_gateway, (const void *)&ee_gateway,4);
+    timer_set(&periodic_timer, CLOCK_SECOND / 2);
+    timer_set(&arp_timer, CLOCK_SECOND * 10);
 
-        uip_ipaddr(ipaddr, _ip_addr[0], _ip_addr[1], _ip_addr[2], _ip_addr[3]);
-        uip_sethostaddr(ipaddr);
-
-        uip_ipaddr(ipaddr, _net_mask[0], _net_mask[1], _net_mask[2], _net_mask[3]);
-        uip_setnetmask(ipaddr);
-
-        uip_ipaddr(ipaddr, _gateway[0], _gateway[1], _gateway[2], _gateway[3]);
-        uip_setdraddr(ipaddr);
-    } else {
+    uint8_t enable_dhcp=eeprom_read_byte(&ee_enable_dhcp);
+    uip_ipaddr_t ipaddr;
+    if(enable_dhcp) {
         uip_ipaddr(ipaddr, 0, 0, 0, 0);
         uip_sethostaddr(ipaddr);
         uip_setnetmask(ipaddr);
         uip_setdraddr(ipaddr);
-    }
 
-    timer_set(&periodic_timer, CLOCK_SECOND / 2);
-    timer_set(&arp_timer, CLOCK_SECOND * 10);
-
-    httpd_init();
-
-    if(_enable_dhcp) {
         dhcpc_init(&uNet_eth_address.addr[0], 6);
         dhcpc_request();
+    } else {
+        uint8_t ip[4];
+        eeprom_read_block((void *)ip, (const void *)&ee_ip_addr,4);
+        uip_ipaddr(ipaddr, ip[0], ip[1], ip[2], ip[3]);
+        uip_sethostaddr(ipaddr);
+
+        eeprom_read_block((void *)ip,(const void *)&ee_net_mask,4);
+        uip_ipaddr(ipaddr, ip[0], ip[1], ip[2], ip[3]);
+        uip_setnetmask(ipaddr);
+
+        eeprom_read_block((void *)ip, (const void *)&ee_gateway,4);
+        uip_ipaddr(ipaddr, ip[0], ip[1], ip[2], ip[3]);
+        uip_setdraddr(ipaddr);
     }
+
+
+    httpd_init();
 
     while(1) {
         NetTask();

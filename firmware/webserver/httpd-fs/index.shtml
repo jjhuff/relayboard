@@ -1,7 +1,6 @@
 <html><head><title>Welcome to the uhttpd-avr web server!</title></head>
-<body bgcolor="#fffeec" text="black">
-<H1>Welcome to the uhttpd-avr web server!</H1>
-<p><A href="hello.shtml">Hello CGI script</A></p>
+<body text="black">
+<H1>Welcome to the relay board</H1>
 <p><A href="settings.shtml">Network Settings</A></p>
 <br>
 %! welcome
