@@ -3,5 +3,20 @@
 <H1>Welcome to the relay board</H1>
 <p><A href="settings.shtml">Network Settings</A></p>
 <br>
+<form action='/relay.shtml' method='get'>
+<table>
+    <tr>
+        <td>Relay 1</td>
+        <td>Relay 2</td>
+    </tr>
+    <tr>
+%! relay_status
+    </tr>
+    <tr>
+        <td><input type=submit name='relay1' value='On'><input type=submit name='relay1' value='Off'></td>
+        <td><input type=submit name='relay2' value='On'><input type=submit name='relay2' value='Off'></td>
+    </tr>
+</table>
+</form>
 %! welcome
 </body></html>

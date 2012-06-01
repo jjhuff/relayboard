@@ -51,11 +51,15 @@
 #include <string.h>
 
 HTTPD_CGI_CALL(cgi_settings, "settings", run_settings);
+HTTPD_CGI_CALL(cgi_relay_set,  "relay_set",  run_relay_set);
+HTTPD_CGI_CALL(cgi_relay_status,  "relay_status",  run_relay_status);
 HTTPD_CGI_CALL(cgi_welcome,  "welcome",  run_welcome);
 
 static const struct httpd_cgi_call *calls[] =
 {
     &cgi_settings,
+    &cgi_relay_set,
+    &cgi_relay_status,
     &cgi_welcome,
     NULL
 };
@@ -238,5 +242,62 @@ static PT_THREAD(run_welcome(struct httpd_state *s, PGM_P ptr)) {
 
     PSOCK_BEGIN(&s->sout);
     PSOCK_SEND_STR(&s->sout,temp);
+    PSOCK_END(&s->sout);
+}
+
+static PT_THREAD(run_relay_status(struct httpd_state *s, PGM_P ptr)) {
+    PSOCK_BEGIN(&s->sout);
+
+    //char temp[30];
+    //sprintf_P(temp,PSTR("<td span=2>DDRC: %02x PORTC: %02x</td>"), DDRC, PORTC);
+    //PSOCK_SEND_STR(&s->sout,temp);
+
+
+    if( PORTC & _BV(5) ) {
+        PSOCK_SEND_PSTR(&s->sout, PSTR("<td>On</td>"));
+    }else{
+        PSOCK_SEND_PSTR(&s->sout, PSTR("<td>Off</td>"));
+    }
+
+    if( PORTC & _BV(4) ) {
+        PSOCK_SEND_PSTR(&s->sout, PSTR("<td>On</td>"));
+    } else {
+        PSOCK_SEND_PSTR(&s->sout, PSTR("<td>Off</td>"));
+    }
+
+    PSOCK_END(&s->sout);
+}
+
+static PT_THREAD(run_relay_set(struct httpd_state *s, PGM_P ptr)) {
+    PSOCK_BEGIN(&s->sout);
+    uint8_t pcount;
+
+    //check if there are parameters passed
+    if(s->param[0] && (pcount=http_get_parameters_parse(s->param,sizeof(s->param)))>0) {
+        //walk through parameters
+        for(uint8_t i=0; i<pcount; i++) {
+            char *pname, *pval;
+            pname= http_get_parameter_name(s->param, i, sizeof(s->param));
+            pval = http_get_parameter_value(s->param, i, sizeof(s->param));
+
+            uint8_t pin = 0;
+            if(!strcmp_P(pname, PSTR("relay1")) ) {
+                pin = _BV(5);
+            } else if(!strcmp_P(pname, PSTR("relay2")) ) {
+                pin = _BV(4);
+            }
+
+            if (!strcmp(pval, "On")) {
+                PORTC |= pin;
+            } else {
+                PORTC &= ~pin;
+            }
+
+        }
+    }
+
+    // Generate the output
+    PSOCK_SEND_PSTR(&s->sout, PSTR("<a href='/'>Done</a>"));
+
     PSOCK_END(&s->sout);
 }
