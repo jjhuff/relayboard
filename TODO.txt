@@ -10,4 +10,6 @@ Hardware:
     9. twisted pair pins are reversed
    10. magjack pin 3 needs to go to 3.3v via ferrite
    11. LEDs on each relay
-   12. bias resistor on relay transistor?
+   12. 1k base resistor on each transistor
+   13. transistors are backwards
+   14. NC and NO are backwards on the relay outputs
