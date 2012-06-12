@@ -98,8 +98,9 @@ int main(void) {
     timer_set(&periodic_timer, CLOCK_SECOND / 2);
     timer_set(&arp_timer, CLOCK_SECOND * 10);
 
-    // Set relay pins to out
-    DDRC |= (PORTC4|PORTC5);
+    // Set relay pins to out (PortC.[45])
+    DDRC |= 1<<4 | 1<<5;
+    //DDRC |= _BV(4) | _BV(5);
 
     uip_ipaddr_t ipaddr;
     uint8_t enable_dhcp = eeprom_read_byte(&ee_enable_dhcp);
