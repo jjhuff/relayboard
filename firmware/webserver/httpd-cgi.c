@@ -53,14 +53,12 @@
 HTTPD_CGI_CALL(cgi_settings, "settings", run_settings);
 HTTPD_CGI_CALL(cgi_relay_set,  "relay_set",  run_relay_set);
 HTTPD_CGI_CALL(cgi_relay_status,  "relay_status",  run_relay_status);
-HTTPD_CGI_CALL(cgi_welcome,  "welcome",  run_welcome);
 
 static const struct httpd_cgi_call *calls[] =
 {
     &cgi_settings,
     &cgi_relay_set,
     &cgi_relay_status,
-    &cgi_welcome,
     NULL
 };
 
@@ -235,16 +233,6 @@ static PT_THREAD(run_settings(struct httpd_state *s, PGM_P ptr)) {
     PSOCK_END(&s->sout);
 }
 
-static PT_THREAD(run_welcome(struct httpd_state *s, PGM_P ptr)) {
-    //NOTE:local variables are not preserved during the calls to proto socket functins
-    char temp[30];
-    sprintf_P(temp,PSTR("System time: %u ticks"),(unsigned int)clock_time());
-
-    PSOCK_BEGIN(&s->sout);
-    PSOCK_SEND_STR(&s->sout,temp);
-    PSOCK_END(&s->sout);
-}
-
 static PT_THREAD(run_relay_status(struct httpd_state *s, PGM_P ptr)) {
     PSOCK_BEGIN(&s->sout);
 
@@ -295,9 +283,6 @@ static PT_THREAD(run_relay_set(struct httpd_state *s, PGM_P ptr)) {
 
         }
     }
-
-    // Generate the output
-    //PSOCK_SEND_PSTR(&s->sout, PSTR("<a href='/'>Done</a>"));
 
     PSOCK_END(&s->sout);
 }

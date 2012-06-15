@@ -100,7 +100,6 @@ int main(void) {
 
     // Set relay pins to out (PortC.[45])
     DDRC |= 1<<4 | 1<<5;
-    //DDRC |= _BV(4) | _BV(5);
 
     uip_ipaddr_t ipaddr;
     uint8_t enable_dhcp = eeprom_read_byte(&ee_enable_dhcp);

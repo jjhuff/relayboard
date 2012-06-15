@@ -44,8 +44,8 @@ struct httpd_state {
   uint8_t timer;
   struct psock       sin, sout;
   struct pt          outputpt, scriptpt;
-  char   param[250];
-  char   inputbuf[250];
+  char   param[128];
+  char   inputbuf[128];
   char   filename[20];
   char   state;
   struct httpd_fs_file file;
