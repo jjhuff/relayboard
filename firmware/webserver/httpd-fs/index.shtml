@@ -1,9 +1,8 @@
-<html><head><title>Welcome to the uhttpd-avr web server!</title></head>
-<body text="black">
-<H1>Welcome to the relay board</H1>
-<p><A href="settings.shtml">Network Settings</A></p>
-<br>
-<form action='/relay.shtml' method='get'>
+<html><head><title>Relay Control</title></head>
+<body>
+<h1>Relay Control</h1>
+%! relay_set
+<form action='/index.shtml' method='get'>
 <table>
     <tr>
         <td>Relay 1</td>
@@ -18,5 +17,8 @@
     </tr>
 </table>
 </form>
+<br>
+<a href="settings.shtml">Network Settings</a>
+<br>
 %! welcome
 </body></html>

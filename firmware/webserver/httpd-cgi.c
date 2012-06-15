@@ -297,7 +297,7 @@ static PT_THREAD(run_relay_set(struct httpd_state *s, PGM_P ptr)) {
     }
 
     // Generate the output
-    PSOCK_SEND_PSTR(&s->sout, PSTR("<a href='/'>Done</a>"));
+    //PSOCK_SEND_PSTR(&s->sout, PSTR("<a href='/'>Done</a>"));
 
     PSOCK_END(&s->sout);
 }
