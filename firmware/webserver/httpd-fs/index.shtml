@@ -5,8 +5,7 @@
 <form action='/index.shtml' method='get'>
 <table>
     <tr>
-        <td>Relay 1</td>
-        <td>Relay 2</td>
+%! relay_names
     </tr>
     <tr>
 %! relay_status

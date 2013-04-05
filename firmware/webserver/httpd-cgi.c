@@ -52,12 +52,14 @@
 
 HTTPD_CGI_CALL(cgi_settings, "settings", run_settings);
 HTTPD_CGI_CALL(cgi_relay_set,  "relay_set",  run_relay_set);
+HTTPD_CGI_CALL(cgi_relay_names,  "relay_names",  run_relay_names);
 HTTPD_CGI_CALL(cgi_relay_status,  "relay_status",  run_relay_status);
 
 static const struct httpd_cgi_call *calls[] =
 {
     &cgi_settings,
     &cgi_relay_set,
+    &cgi_relay_names,
     &cgi_relay_status,
     NULL
 };
@@ -100,6 +102,8 @@ void http_url_decode(const char *in, char *out, uint8_t mx) {
             tmp[0]=in[++i];
             tmp[1]=in[++i];
             out[j++]=(char)strtol(tmp,NULL,16);
+        } else if(in[i]=='+') {
+            out[j++]=' ';
         } else {
             out[j++]=in[i];
         }
@@ -156,6 +160,7 @@ static uint8_t decode_ip(char *in, uint8_t *out) {
 static PT_THREAD(run_settings(struct httpd_state *s, PGM_P ptr)) {
     uint8_t pcount;
     uint8_t ip[4];
+    char temp[30];
 
     PSOCK_BEGIN(&s->sout);
 
@@ -182,13 +187,18 @@ static PT_THREAD(run_settings(struct httpd_state *s, PGM_P ptr)) {
             } else if(!strcmp_P(pname, PSTR("gw")) ) {
                 if(decode_ip(pval, ip) == 4)
                     eeprom_write_block(ip, &ee_gateway, 4);
+            } else if(!strcmp_P(pname, PSTR("r1n")) ) {
+                http_url_decode(pval, temp, sizeof(temp));
+                eeprom_write_block(temp, &ee_relay1_name, sizeof(ee_relay1_name));
+            } else if(!strcmp_P(pname, PSTR("r2n")) ) {
+                http_url_decode(pval, temp, sizeof(temp));
+                eeprom_write_block(temp, &ee_relay2_name, sizeof(ee_relay2_name));
             }
         }
         PSOCK_SEND_PSTR(&s->sout, PSTR("<b>Parameters Accepted, cycle power to make active!</b>"));
     }
 
     // Generate the output
-    char temp[30];
     PSOCK_SEND_PSTR(&s->sout, PSTR("<form action='/settings.shtml' method='get'><table>"));
 
     // Print the MAC
@@ -228,7 +238,33 @@ static PT_THREAD(run_settings(struct httpd_state *s, PGM_P ptr)) {
     snprintf_P(temp, sizeof(temp), PSTR("%d.%d.%d.%d"), ip[0], ip[1], ip[2], ip[3]);
     PSOCK_SEND_STR(&s->sout,temp);
 
+    // Relay1 name
+    PSOCK_SEND_PSTR(&s->sout,PSTR("\"/></td></tr><tr><td>Relay 1:</td><td><input type=\"text\" name=\"r1n\" size=\"15\" maxlength=\"15\" value=\""));
+    eeprom_read_block((void *)temp, (const void *)&ee_relay1_name, sizeof(ee_relay1_name));
+    PSOCK_SEND_STR(&s->sout,temp);
+
+    // Relay2 name
+    PSOCK_SEND_PSTR(&s->sout,PSTR("\"/></td></tr><tr><td>Relay 2:</td><td><input type=\"text\" name=\"r2n\" size=\"15\" maxlength=\"15\" value=\""));
+    eeprom_read_block((void *)temp, (const void *)&ee_relay2_name, sizeof(ee_relay2_name));
+    PSOCK_SEND_STR(&s->sout,temp);
+
     PSOCK_SEND_PSTR(&s->sout,PSTR("\"/></td></tr><tr align=\"justify\"><td colspan=2><INPUT TYPE=submit VALUE=\"Submit\"></td></tr></table></form>"));
+
+    PSOCK_END(&s->sout);
+}
+
+static PT_THREAD(run_relay_names(struct httpd_state *s, PGM_P ptr)) {
+    PSOCK_BEGIN(&s->sout);
+
+    char temp[sizeof(ee_relay1_name)+1];
+
+    PSOCK_SEND_PSTR(&s->sout,PSTR("<td>"));
+    eeprom_read_block((void *)temp, (const void *)&ee_relay1_name, sizeof(ee_relay1_name));
+    PSOCK_SEND_STR(&s->sout,temp);
+    PSOCK_SEND_PSTR(&s->sout,PSTR("</td><td>"));
+    eeprom_read_block((void *)temp, (const void *)&ee_relay2_name, sizeof(ee_relay2_name));
+    PSOCK_SEND_STR(&s->sout,temp);
+    PSOCK_SEND_PSTR(&s->sout,PSTR("</td>"));
 
     PSOCK_END(&s->sout);
 }

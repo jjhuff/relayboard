@@ -37,7 +37,8 @@ uint8_t EEMEM ee_eth_addr[6] = {UIP_ETHADDR0,UIP_ETHADDR1,UIP_ETHADDR2,UIP_ETHAD
 uint8_t EEMEM ee_ip_addr[4] = {UIP_IPADDR0, UIP_IPADDR1, UIP_IPADDR2, UIP_IPADDR3};
 uint8_t EEMEM ee_net_mask[4] = {UIP_NETMASK0, UIP_NETMASK1, UIP_NETMASK2, UIP_NETMASK3};
 uint8_t EEMEM ee_gateway[4] = {UIP_DRIPADDR0, UIP_DRIPADDR1, UIP_DRIPADDR2, UIP_DRIPADDR3};
-
+uint8_t EEMEM ee_relay1_name[16] = "Relay 1";
+uint8_t EEMEM ee_relay2_name[16] = "Relay 2";
 
 clock_time_t clock_time(void) {
   return timerCounter;
